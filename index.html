@@ -1,0 +1,1300 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>TUSAŞ Proje Risk Simülatörü</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Mono:wght@400;500&family=Outfit:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+:root {
+  --navy: #0B1F3A;
+  --navy2: #132847;
+  --blue: #1E4D8C;
+  --sky: #3D7DD4;
+  --accent: #E8A020;
+  --accent2: #F2C050;
+  --red: #C0392B;
+  --red2: #E74C3C;
+  --green: #1A7A4A;
+  --green2: #27AE60;
+  --cream: #F5F0E8;
+  --cream2: #EDE6D6;
+  --text: #0B1F3A;
+  --muted: #5A6A82;
+  --border: rgba(11,31,58,0.12);
+  --card-bg: rgba(255,255,255,0.9);
+  --page-bg: #EBF0F8;
+}
+
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+html { scroll-behavior: smooth; }
+
+body {
+  font-family: 'Outfit', sans-serif;
+  background: var(--page-bg);
+  color: var(--text);
+  min-height: 100vh;
+  overflow-x: hidden;
+}
+
+/* ── Background pattern ── */
+body::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  background-image:
+    radial-gradient(circle at 20% 20%, rgba(61,125,212,0.08) 0%, transparent 50%),
+    radial-gradient(circle at 80% 80%, rgba(232,160,32,0.06) 0%, transparent 50%),
+    radial-gradient(circle at 60% 10%, rgba(11,31,58,0.04) 0%, transparent 40%);
+  pointer-events: none;
+  z-index: 0;
+}
+
+.grid-bg {
+  position: fixed;
+  inset: 0;
+  background-image:
+    linear-gradient(rgba(61,125,212,0.04) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(61,125,212,0.04) 1px, transparent 1px);
+  background-size: 48px 48px;
+  pointer-events: none;
+  z-index: 0;
+}
+
+.container {
+  max-width: 860px;
+  margin: 0 auto;
+  padding: 0 24px;
+  position: relative;
+  z-index: 1;
+}
+
+/* ── Header ── */
+.site-header {
+  padding: 32px 0 0;
+  text-align: center;
+}
+
+.header-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  background: var(--navy);
+  color: var(--cream);
+  font-family: 'DM Mono', monospace;
+  font-size: 11px;
+  letter-spacing: 2px;
+  padding: 6px 16px;
+  border-radius: 20px;
+  margin-bottom: 20px;
+  animation: fadeDown 0.6s ease both;
+}
+
+.header-badge span.dot {
+  width: 6px; height: 6px;
+  background: var(--accent);
+  border-radius: 50%;
+  animation: pulse 2s ease-in-out infinite;
+}
+
+@keyframes pulse { 0%,100%{opacity:1;transform:scale(1)} 50%{opacity:0.5;transform:scale(0.8)} }
+
+.site-title {
+  font-family: 'DM Serif Display', serif;
+  font-size: clamp(32px, 5vw, 52px);
+  color: var(--navy);
+  line-height: 1.1;
+  margin-bottom: 16px;
+  animation: fadeDown 0.6s 0.1s ease both;
+}
+
+.site-title em {
+  font-style: italic;
+  color: var(--sky);
+}
+
+.site-sub {
+  font-size: 16px;
+  color: var(--muted);
+  max-width: 520px;
+  margin: 0 auto 40px;
+  line-height: 1.7;
+  font-weight: 300;
+  animation: fadeDown 0.6s 0.2s ease both;
+}
+
+/* ── Progress ── */
+.progress-wrap {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0;
+  margin-bottom: 48px;
+  animation: fadeDown 0.6s 0.3s ease both;
+}
+
+.prog-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  opacity: 0.35;
+  transition: opacity 0.4s, transform 0.4s;
+}
+
+.prog-item.active { opacity: 1; }
+.prog-item.done { opacity: 0.7; }
+
+.prog-circle {
+  width: 36px; height: 36px;
+  border-radius: 50%;
+  border: 1.5px solid var(--navy);
+  display: flex; align-items: center; justify-content: center;
+  font-family: 'DM Mono', monospace;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--navy);
+  background: white;
+  transition: all 0.4s cubic-bezier(0.34,1.56,0.64,1);
+  position: relative;
+}
+
+.prog-item.active .prog-circle {
+  background: var(--navy);
+  color: white;
+  transform: scale(1.15);
+  box-shadow: 0 4px 20px rgba(11,31,58,0.25);
+}
+
+.prog-item.done .prog-circle {
+  background: var(--green);
+  border-color: var(--green);
+  color: white;
+}
+
+.prog-label {
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--navy);
+  white-space: nowrap;
+}
+
+.prog-line {
+  width: 48px; height: 1.5px;
+  background: linear-gradient(90deg, var(--border), var(--border));
+  transition: background 0.4s;
+  flex-shrink: 0;
+}
+
+.prog-line.done {
+  background: var(--green);
+}
+
+/* ── Screens ── */
+.screen { display: none; }
+.screen.active { display: block; animation: screenIn 0.5s cubic-bezier(0.16,1,0.3,1) both; }
+
+@keyframes screenIn {
+  from { opacity: 0; transform: translateY(24px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes fadeDown {
+  from { opacity: 0; transform: translateY(-12px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes fadeUp {
+  from { opacity: 0; transform: translateY(16px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes scaleIn {
+  from { opacity: 0; transform: scale(0.9); }
+  to   { opacity: 1; transform: scale(1); }
+}
+
+@keyframes slideRight {
+  from { width: 0; }
+}
+
+/* ── Section label ── */
+.section-label {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 24px;
+}
+
+.section-num {
+  width: 40px; height: 40px;
+  border-radius: 12px;
+  background: var(--navy);
+  color: white;
+  display: flex; align-items: center; justify-content: center;
+  font-family: 'DM Mono', monospace;
+  font-size: 16px;
+  font-weight: 500;
+  flex-shrink: 0;
+}
+
+.section-num.s2 { background: var(--green); }
+.section-num.s3 { background: var(--accent); color: var(--navy); }
+
+.section-info h2 {
+  font-family: 'DM Serif Display', serif;
+  font-size: 22px;
+  color: var(--navy);
+  line-height: 1.2;
+}
+
+.section-info p {
+  font-size: 13px;
+  color: var(--muted);
+  margin-top: 2px;
+}
+
+/* ── Activity cards ── */
+.activity-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+  gap: 14px;
+  margin-bottom: 32px;
+}
+
+.act-card {
+  background: var(--card-bg);
+  border: 1.5px solid var(--border);
+  border-radius: 16px;
+  padding: 18px;
+  cursor: pointer;
+  transition: all 0.25s cubic-bezier(0.16,1,0.3,1);
+  position: relative;
+  overflow: hidden;
+  backdrop-filter: blur(8px);
+}
+
+.act-card::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  height: 3px;
+  background: var(--border);
+  transition: background 0.25s;
+}
+
+.act-card:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 12px 40px rgba(11,31,58,0.12);
+  border-color: rgba(61,125,212,0.4);
+}
+
+.act-card.selected {
+  border-color: var(--sky);
+  background: white;
+  box-shadow: 0 8px 32px rgba(61,125,212,0.2);
+  transform: translateY(-2px);
+}
+
+.act-card.selected::before { background: var(--sky); }
+
+.act-phase {
+  font-family: 'DM Mono', monospace;
+  font-size: 10px;
+  letter-spacing: 1.5px;
+  color: var(--muted);
+  text-transform: uppercase;
+  margin-bottom: 8px;
+}
+
+.act-name {
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--navy);
+  margin-bottom: 4px;
+  line-height: 1.4;
+}
+
+.act-dur {
+  font-size: 12px;
+  color: var(--muted);
+  margin-bottom: 14px;
+}
+
+.ci-wrap {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.ci-track {
+  flex: 1;
+  height: 5px;
+  background: rgba(11,31,58,0.08);
+  border-radius: 3px;
+  overflow: hidden;
+}
+
+.ci-fill {
+  height: 100%;
+  border-radius: 3px;
+  animation: slideRight 1s cubic-bezier(0.16,1,0.3,1) both;
+}
+
+.ci-value {
+  font-family: 'DM Mono', monospace;
+  font-size: 12px;
+  font-weight: 500;
+  min-width: 38px;
+  text-align: right;
+}
+
+/* ── Selected activity detail ── */
+.selected-detail {
+  display: none;
+  animation: fadeUp 0.4s ease both;
+}
+
+/* ── Critical path viz ── */
+.cp-viz {
+  background: var(--navy);
+  border-radius: 16px;
+  padding: 20px 24px;
+  margin-bottom: 24px;
+  overflow-x: auto;
+}
+
+.cp-title {
+  font-family: 'DM Mono', monospace;
+  font-size: 10px;
+  letter-spacing: 2px;
+  color: rgba(255,255,255,0.4);
+  text-transform: uppercase;
+  margin-bottom: 16px;
+}
+
+.cp-nodes {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: nowrap;
+  min-width: max-content;
+}
+
+.cp-node {
+  padding: 6px 12px;
+  border-radius: 8px;
+  font-size: 11px;
+  font-weight: 500;
+  white-space: nowrap;
+  border: 1px solid transparent;
+  transition: all 0.3s;
+}
+
+.cp-node.normal { background: rgba(255,255,255,0.08); color: rgba(255,255,255,0.5); border-color: rgba(255,255,255,0.1); }
+.cp-node.critical { background: rgba(232,160,32,0.15); color: var(--accent2); border-color: rgba(232,160,32,0.3); }
+.cp-node.highlight { background: var(--sky); color: white; border-color: var(--sky); box-shadow: 0 0 20px rgba(61,125,212,0.5); }
+
+.cp-arrow { color: rgba(255,255,255,0.2); font-size: 14px; }
+
+/* ── Slider ── */
+.slider-card {
+  background: var(--card-bg);
+  border: 1.5px solid var(--border);
+  border-radius: 16px;
+  padding: 24px;
+  margin-bottom: 20px;
+  backdrop-filter: blur(8px);
+}
+
+.slider-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 20px;
+}
+
+.slider-title { font-size: 15px; font-weight: 500; color: var(--navy); }
+.slider-hint { font-size: 12px; color: var(--muted); margin-top: 3px; }
+
+.delay-display {
+  text-align: right;
+}
+
+.delay-big {
+  font-family: 'DM Mono', monospace;
+  font-size: 36px;
+  font-weight: 500;
+  color: var(--navy);
+  line-height: 1;
+  transition: color 0.3s;
+}
+
+.delay-unit { font-size: 14px; color: var(--muted); margin-top: 4px; }
+
+input[type=range] {
+  -webkit-appearance: none;
+  width: 100%;
+  height: 6px;
+  border-radius: 3px;
+  background: linear-gradient(90deg, var(--sky) var(--pct, 0%), rgba(11,31,58,0.1) var(--pct, 0%));
+  outline: none;
+  cursor: pointer;
+  transition: background 0.1s;
+}
+
+input[type=range]::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  width: 22px; height: 22px;
+  border-radius: 50%;
+  background: white;
+  border: 2.5px solid var(--sky);
+  box-shadow: 0 2px 12px rgba(61,125,212,0.3);
+  transition: transform 0.2s, box-shadow 0.2s;
+}
+
+input[type=range]:hover::-webkit-slider-thumb, input[type=range]:active::-webkit-slider-thumb {
+  transform: scale(1.2);
+  box-shadow: 0 4px 20px rgba(61,125,212,0.5);
+}
+
+/* ── Metrics ── */
+.metrics-row {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 12px;
+  margin-bottom: 20px;
+}
+
+.metric-card {
+  background: var(--card-bg);
+  border: 1.5px solid var(--border);
+  border-radius: 14px;
+  padding: 18px 16px;
+  text-align: center;
+  backdrop-filter: blur(8px);
+  transition: all 0.3s;
+}
+
+.metric-label {
+  font-size: 11px;
+  color: var(--muted);
+  letter-spacing: 0.5px;
+  margin-bottom: 10px;
+  font-weight: 400;
+  line-height: 1.4;
+}
+
+.metric-value {
+  font-family: 'DM Mono', monospace;
+  font-size: 26px;
+  font-weight: 500;
+  color: var(--navy);
+  line-height: 1;
+  transition: all 0.4s cubic-bezier(0.34,1.56,0.64,1);
+}
+
+.metric-value.danger { color: var(--red); }
+.metric-value.warn { color: #B7770A; }
+.metric-value.info { color: var(--blue); }
+
+/* ── Impact box ── */
+.impact-box {
+  border-radius: 16px;
+  padding: 20px 24px;
+  margin-bottom: 20px;
+  transition: all 0.4s ease;
+  border: 1.5px solid transparent;
+}
+
+.impact-box.level-0 { background: #EBF0F8; border-color: rgba(61,125,212,0.2); }
+.impact-box.level-1 { background: #EDF5F0; border-color: rgba(39,174,96,0.3); }
+.impact-box.level-2 { background: #FDF6E3; border-color: rgba(183,119,10,0.3); }
+.impact-box.level-3 { background: #FDECEA; border-color: rgba(192,57,43,0.3); }
+
+.impact-title {
+  font-size: 15px;
+  font-weight: 600;
+  margin-bottom: 8px;
+  transition: color 0.3s;
+}
+
+.impact-box.level-0 .impact-title { color: var(--blue); }
+.impact-box.level-1 .impact-title { color: var(--green); }
+.impact-box.level-2 .impact-title { color: #B7770A; }
+.impact-box.level-3 .impact-title { color: var(--red); }
+
+.impact-text {
+  font-size: 14px;
+  line-height: 1.7;
+  transition: color 0.3s;
+}
+
+.impact-box.level-0 .impact-text { color: var(--blue); }
+.impact-box.level-1 .impact-text { color: var(--green); }
+.impact-box.level-2 .impact-text { color: #916010; }
+.impact-box.level-3 .impact-text { color: var(--red); }
+
+/* ── Buttons ── */
+.btn-row {
+  display: flex;
+  gap: 12px;
+  margin-top: 8px;
+}
+
+.btn {
+  flex: 1;
+  padding: 14px 20px;
+  border-radius: 12px;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  border: 1.5px solid var(--border);
+  background: var(--card-bg);
+  color: var(--navy);
+  transition: all 0.2s cubic-bezier(0.16,1,0.3,1);
+  font-family: 'Outfit', sans-serif;
+}
+
+.btn:hover {
+  background: white;
+  transform: translateY(-2px);
+  box-shadow: 0 8px 24px rgba(11,31,58,0.1);
+}
+
+.btn:active { transform: scale(0.98); }
+
+.btn.primary {
+  background: var(--navy);
+  color: white;
+  border-color: var(--navy);
+}
+
+.btn.primary:hover {
+  background: var(--blue);
+  border-color: var(--blue);
+  box-shadow: 0 8px 24px rgba(11,31,58,0.3);
+}
+
+.btn:disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
+  transform: none;
+  box-shadow: none;
+}
+
+/* ── Fine table ── */
+.fine-table {
+  background: var(--card-bg);
+  border: 1.5px solid var(--border);
+  border-radius: 16px;
+  overflow: hidden;
+  margin-bottom: 20px;
+  backdrop-filter: blur(8px);
+}
+
+.fine-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 14px 20px;
+  border-bottom: 1px solid var(--border);
+  transition: background 0.15s;
+}
+
+.fine-row:last-child { border-bottom: none; }
+.fine-row:hover { background: rgba(61,125,212,0.03); }
+
+.fine-key { font-size: 13px; color: var(--muted); }
+.fine-val { font-size: 13px; font-weight: 500; color: var(--navy); font-family: 'DM Mono', monospace; }
+
+.fine-row.total {
+  background: var(--navy);
+}
+
+.fine-row.total .fine-key {
+  color: rgba(255,255,255,0.6);
+  font-size: 14px;
+  font-weight: 500;
+}
+
+.fine-row.total .fine-val {
+  color: var(--accent2);
+  font-size: 22px;
+}
+
+/* ── Sensitivity ── */
+.sens-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: 14px;
+  margin-bottom: 24px;
+}
+
+.sens-card {
+  background: var(--card-bg);
+  border: 1.5px solid var(--border);
+  border-radius: 16px;
+  padding: 20px;
+  cursor: pointer;
+  transition: all 0.25s cubic-bezier(0.16,1,0.3,1);
+  text-align: center;
+  backdrop-filter: blur(8px);
+  position: relative;
+  overflow: hidden;
+}
+
+.sens-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 16px 48px rgba(11,31,58,0.12);
+}
+
+.sens-card.selected {
+  border-color: var(--sky);
+  background: white;
+  box-shadow: 0 8px 32px rgba(61,125,212,0.2);
+}
+
+.sens-card.optimal-choice {
+  border-color: var(--green2);
+  box-shadow: 0 8px 32px rgba(39,174,96,0.25);
+}
+
+.sens-card.suboptimal {
+  opacity: 0.6;
+}
+
+.sens-saving {
+  font-family: 'DM Mono', monospace;
+  font-size: 32px;
+  font-weight: 500;
+  color: var(--navy);
+  line-height: 1;
+  margin-bottom: 4px;
+}
+
+.sens-saving-unit { font-size: 12px; color: var(--muted); margin-bottom: 14px; }
+.sens-name { font-size: 13px; font-weight: 500; color: var(--navy); margin-bottom: 4px; line-height: 1.4; }
+.sens-ci { font-size: 12px; color: var(--muted); }
+
+/* ── Final screen ── */
+.final-hero {
+  text-align: center;
+  padding: 40px 0 32px;
+}
+
+.final-icon {
+  width: 80px; height: 80px;
+  border-radius: 50%;
+  background: var(--navy);
+  margin: 0 auto 20px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 32px;
+  animation: scaleIn 0.5s cubic-bezier(0.34,1.56,0.64,1) both;
+}
+
+.final-title {
+  font-family: 'DM Serif Display', serif;
+  font-size: 28px;
+  color: var(--navy);
+  margin-bottom: 10px;
+}
+
+.final-sub {
+  font-size: 15px;
+  color: var(--muted);
+  line-height: 1.7;
+  max-width: 480px;
+  margin: 0 auto;
+}
+
+.insight-list { margin: 24px 0; }
+
+.insight-item {
+  display: flex;
+  gap: 14px;
+  padding: 16px 20px;
+  background: var(--card-bg);
+  border: 1.5px solid var(--border);
+  border-radius: 14px;
+  margin-bottom: 10px;
+  animation: fadeUp 0.4s ease both;
+  backdrop-filter: blur(8px);
+}
+
+.insight-item:nth-child(2) { animation-delay: 0.1s; }
+.insight-item:nth-child(3) { animation-delay: 0.2s; }
+.insight-item:nth-child(4) { animation-delay: 0.3s; }
+
+.insight-icon {
+  width: 36px; height: 36px;
+  border-radius: 10px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 16px;
+  flex-shrink: 0;
+}
+
+.insight-content { flex: 1; }
+.insight-label { font-size: 12px; color: var(--muted); margin-bottom: 4px; font-weight: 500; letter-spacing: 0.3px; }
+.insight-text { font-size: 14px; color: var(--navy); line-height: 1.5; font-family: 'DM Mono', monospace; font-weight: 500; }
+
+/* ── Separator ── */
+.sep { height: 1px; background: var(--border); margin: 32px 0; }
+
+/* ── Footer ── */
+.site-footer {
+  text-align: center;
+  padding: 32px 0 40px;
+  font-size: 12px;
+  color: var(--muted);
+  font-family: 'DM Mono', monospace;
+}
+
+/* ── Number counter animation ── */
+.counting { animation: countPop 0.3s cubic-bezier(0.34,1.56,0.64,1); }
+@keyframes countPop { 0%{transform:scale(1.3)} 100%{transform:scale(1)} }
+
+/* ── Tooltip ── */
+.tooltip-wrap { position: relative; display: inline-flex; }
+.tooltip {
+  position: absolute;
+  bottom: calc(100% + 8px);
+  left: 50%;
+  transform: translateX(-50%);
+  background: var(--navy);
+  color: white;
+  font-size: 12px;
+  padding: 6px 12px;
+  border-radius: 8px;
+  white-space: nowrap;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 0.2s;
+  z-index: 10;
+}
+.tooltip-wrap:hover .tooltip { opacity: 1; }
+
+/* ── Responsive ── */
+@media (max-width: 600px) {
+  .metrics-row { grid-template-columns: repeat(2, 1fr); }
+  .prog-label { display: none; }
+  .cp-nodes { gap: 4px; }
+}
+</style>
+</head>
+<body>
+
+<div class="grid-bg"></div>
+
+<div class="container">
+
+  <header class="site-header">
+    <div class="header-badge">
+      <span class="dot"></span>
+      TUSAŞ · HAVACILIKta PROJE RİSK ANALİZİ
+    </div>
+    <h1 class="site-title">Projeyi<br><em>siz yönetin</em></h1>
+    <p class="site-sub">Hangi aktivite gecikirse ne olur? Gerçek proje verisiyle deneyin — ve bunun şirkete maliyetini görün.</p>
+  </header>
+
+  <!-- Progress -->
+  <div class="progress-wrap" id="progressWrap">
+    <div class="prog-item active" id="pi1">
+      <div class="prog-circle">1</div>
+      <span class="prog-label">Aktivite &amp; Gecikme</span>
+    </div>
+    <div class="prog-line" id="pl1"></div>
+    <div class="prog-item" id="pi2">
+      <div class="prog-circle">2</div>
+      <span class="prog-label">Mali Etki</span>
+    </div>
+    <div class="prog-line" id="pl2"></div>
+    <div class="prog-item" id="pi3">
+      <div class="prog-circle">3</div>
+      <span class="prog-label">Kaynak Kararı</span>
+    </div>
+  </div>
+
+  <!-- SCREEN 1 -->
+  <div class="screen active" id="s1">
+    <div class="section-label">
+      <div class="section-num">1</div>
+      <div class="section-info">
+        <h2>Bir aktivite seçin</h2>
+        <p>Farklı kritiklik seviyeleri — gerçek TUSAŞ proje verisinden</p>
+      </div>
+    </div>
+
+    <div class="activity-grid" id="actGrid"></div>
+
+    <div class="selected-detail" id="selDetail">
+
+      <div class="cp-viz">
+        <div class="cp-title">Kritik Yol — Seçili Aktivitenin Konumu</div>
+        <div class="cp-nodes" id="cpNodes"></div>
+      </div>
+
+      <div class="slider-card">
+        <div class="slider-header">
+          <div>
+            <div class="slider-title">Aktivite kaç gün geciksin?</div>
+            <div class="slider-hint" id="sliderHint">CI değerine göre projeye yansıması hesaplanır</div>
+          </div>
+          <div class="delay-display">
+            <div class="delay-big" id="delayBig">0</div>
+            <div class="delay-unit">gün gecikme</div>
+          </div>
+        </div>
+        <input type="range" id="delaySlider" min="0" max="90" step="1" value="0"
+               oninput="onDelayChange(this.value)">
+        <div style="display:flex;justify-content:space-between;font-size:11px;color:var(--muted);margin-top:8px;font-family:'DM Mono',monospace">
+          <span>0</span><span>15</span><span>30</span><span>45</span><span>60</span><span>75</span><span>90 gün</span>
+        </div>
+      </div>
+
+      <div class="metrics-row">
+        <div class="metric-card">
+          <div class="metric-label">Olası gecikme</div>
+          <div class="metric-value danger" id="mProjDelay">+0 gün</div>
+        </div>
+        <div class="metric-card">
+          <div class="metric-label">Olası gecikmelere bağlı beklenen yeni proje süresi</div>
+          <div class="metric-value info" id="mNewDur">3.099 gün</div>
+        </div>
+        <div class="metric-card">
+          <div class="metric-label">Kritiklik İndeksi</div>
+          <div class="metric-value warn" id="mCI">—</div>
+        </div>
+      </div>
+
+      <div class="impact-box level-0" id="impactBox">
+        <div class="impact-title" id="impactTitle">Hazır</div>
+        <div class="impact-text" id="impactText">Kaydırıcıyı hareket ettirerek gecikmenin etkisini inceleyin.</div>
+      </div>
+
+      <div class="btn-row">
+        <button class="btn primary" id="toS2btn" onclick="goS2()" disabled>
+          Mali etkiyi hesapla &rarr;
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- SCREEN 2 -->
+  <div class="screen" id="s2">
+    <div class="section-label">
+      <div class="section-num s2">2</div>
+      <div class="section-info">
+        <h2>Mali etki analizi</h2>
+        <p>Bu gecikmenin şirkete TL cinsinden maliyeti ne?</p>
+      </div>
+    </div>
+
+    <div class="slider-card">
+      <div class="slider-header">
+        <div>
+          <div class="slider-title">Günlük gecikme cezası</div>
+          <div class="slider-hint">Savunma projelerinde tipik aralık: 100K–2M ₺/gün</div>
+        </div>
+        <div class="delay-display">
+          <div class="delay-big" id="fineBig" style="font-size:26px">300.000</div>
+          <div class="delay-unit">₺ / gün</div>
+        </div>
+      </div>
+      <input type="range" id="fineSlider" min="100000" max="2000000" step="50000" value="300000"
+             oninput="onFineChange(this.value)">
+      <div style="display:flex;justify-content:space-between;font-size:11px;color:var(--muted);margin-top:8px;font-family:'DM Mono',monospace">
+        <span>100K</span><span>500K</span><span>1M</span><span>1.5M</span><span>2M ₺</span>
+      </div>
+    </div>
+
+    <div class="fine-table" id="fineTable">
+      <div class="fine-row"><span class="fine-key">Seçilen aktivite</span><span class="fine-val" id="ft1">—</span></div>
+      <div class="fine-row"><span class="fine-key">Kritiklik İndeksi (CI)</span><span class="fine-val" id="ft2">—</span></div>
+      <div class="fine-row"><span class="fine-key">Aktivite gecikmesi</span><span class="fine-val" id="ft3">—</span></div>
+      <div class="fine-row"><span class="fine-key">Projeye yansıyan gecikme</span><span class="fine-val" id="ft4">—</span></div>
+      <div class="fine-row"><span class="fine-key">Günlük ceza oranı</span><span class="fine-val" id="ft5">—</span></div>
+      <div class="fine-row total"><span class="fine-key">Toplam mali zarar</span><span class="fine-val" id="ftTotal">—</span></div>
+    </div>
+
+    <div class="btn-row">
+      <button class="btn" onclick="goScreen('s1');setProgress(1)">&#8592; Geri</button>
+      <button class="btn primary" onclick="goS3()">Kaynak kararı &rarr;</button>
+    </div>
+  </div>
+
+  <!-- SCREEN 3 -->
+  <div class="screen" id="s3">
+    <div class="section-label">
+      <div class="section-num s3">3</div>
+      <div class="section-info">
+        <h2>Kaynak kararı</h2>
+        <p>30 günlük hızlandırma bütçeniz var — nereye harcarsınız?</p>
+      </div>
+    </div>
+
+    <div style="background:var(--navy);border-radius:14px;padding:16px 20px;margin-bottom:24px;display:flex;align-items:center;gap:12px">
+      <div style="font-size:24px">💡</div>
+      <div>
+        <div style="font-size:13px;font-weight:500;color:white;margin-bottom:4px">Sensitivity analizi</div>
+        <div style="font-size:12px;color:rgba(255,255,255,0.55);line-height:1.5">Aşağıdaki aktivitelerden birini 30 gün hızlandırabilirsiniz. Hangi seçim projeyi en çok kısaltır — ve en fazla para tasarrufu sağlar?</div>
+      </div>
+    </div>
+
+    <div class="sens-grid" id="sensGrid"></div>
+
+    <div id="sensResult" style="display:none;animation:fadeUp 0.4s ease both">
+      <div class="impact-box" id="sensBox">
+        <div class="impact-title" id="sensTitle"></div>
+        <div class="impact-text" id="sensText"></div>
+      </div>
+      <div class="fine-table">
+        <div class="fine-row"><span class="fine-key">Seçtiğiniz aktivite</span><span class="fine-val" id="sr1">—</span></div>
+        <div class="fine-row"><span class="fine-key">Proje kısalması</span><span class="fine-val" id="sr2">—</span></div>
+        <div class="fine-row total"><span class="fine-key">Mali tasarruf</span><span class="fine-val" id="sr3">—</span></div>
+      </div>
+    </div>
+
+    <div class="btn-row">
+      <button class="btn" onclick="goScreen('s2');setProgress(2)">&#8592; Geri</button>
+      <button class="btn primary" id="toFinalBtn" onclick="goFinal()" disabled>Sonuçları gör &rarr;</button>
+    </div>
+  </div>
+
+  <!-- SCREEN FINAL -->
+  <div class="screen" id="sfinal">
+    <div class="final-hero">
+      <div class="final-icon">📊</div>
+      <h1 class="final-title">Analiz tamamlandı</h1>
+      <p class="final-sub">CPM tek bir tarih söyler. Monte Carlo gerçeği gösterir.<br>Bu fark sadece istatistik değil — <strong>para.</strong></p>
+    </div>
+
+    <div class="insight-list" id="insightList"></div>
+
+    <div class="btn-row">
+      <button class="btn" onclick="restartApp()">Yeniden başla</button>
+    </div>
+  </div>
+
+  <footer class="site-footer">
+    Hacettepe Üniversitesi &middot; Endüstri Mühendisliği &middot; TUSAŞ İş Birliği<br>
+    Tuğçe Başaran &middot; Tarık Buğra Birinci &middot; Zeynep Kızkapan &middot; Koray Sarı
+  </footer>
+
+</div>
+
+<script>
+const CPM_DUR = 3099;
+const MC_MEAN = 3252;
+const MC_GAP  = 153;
+
+const ACTS = [
+  {id:1, name:"System Requirements Review", phase:"Tasarım",    dur:45,  ci:100,  critical:true},
+  {id:2, name:"Final Acceptance",           phase:"Sertifikasyon", dur:30, ci:100, critical:true},
+  {id:3, name:"Critical Design Review",     phase:"Tasarım",    dur:60,  ci:86.9, critical:true},
+  {id:4, name:"First Metal Cut",            phase:"Üretim",     dur:30,  ci:86.9, critical:true},
+  {id:5, name:"Ground Vibration Test",      phase:"Test",       dur:25,  ci:86.9, critical:true},
+  {id:6, name:"Final Assembly Completion",  phase:"Üretim",     dur:90,  ci:42.3, critical:false},
+  {id:7, name:"Compliance Demo Review",     phase:"Sertifikasyon", dur:15, ci:12.1, critical:false},
+  {id:8, name:"Avionics Integration Start", phase:"Entegrasyon", dur:50,  ci:28.4, critical:false},
+];
+
+// Sensitivity acts — CI benzersiz ve farklı, mantık hatası yok
+const SENS = [
+  {id:1, name:"System Req. Review",    ci:100,  saving:30, phase:"Tasarım",    optimal:true},
+  {id:4, name:"First Metal Cut",       ci:86.9, saving:26, phase:"Üretim",     optimal:false},
+  {id:6, name:"Final Assembly",        ci:42.3, saving:12, phase:"Üretim",     optimal:false},
+  {id:7, name:"Compliance Demo",       ci:12.1, saving:3,  phase:"Sertifikasyon", optimal:false},
+];
+
+const CP_NODES = [
+  "Sys.Req.", "Crit.Design", "Tool Mfg.", "First Metal", "Sub.Tooling",
+  "Final Jig", "Ground Vib.", "2nd AV Test", "Final Accept."
+];
+
+let sel = null;
+let delay = 0;
+let dailyFine = 300000;
+let sensChoice = null;
+
+// ── Build activity grid ──
+function buildGrid(){
+  const g = document.getElementById('actGrid');
+  g.innerHTML = ACTS.map(a => {
+    const ciColor = a.ci === 100 ? '#C0392B' : a.ci > 70 ? '#B7770A' : a.ci > 30 ? '#1A7A4A' : '#5A6A82';
+    const ciBg    = a.ci === 100 ? '#E24B4A' : a.ci > 70 ? '#EF9F27' : a.ci > 30 ? '#27AE60' : '#888780';
+    return `
+    <div class="act-card" id="ac${a.id}" onclick="selectAct(${a.id})">
+      <div class="act-phase">${a.phase}</div>
+      <div class="act-name">${a.name}</div>
+      <div class="act-dur">${a.dur} gün süre</div>
+      <div class="ci-wrap">
+        <div class="ci-track">
+          <div class="ci-fill" style="width:${a.ci}%;background:${ciBg};animation-delay:${a.id*0.05}s"></div>
+        </div>
+        <span class="ci-value" style="color:${ciColor}">%${a.ci}</span>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+// ── Select activity ──
+function selectAct(id){
+  sel = ACTS.find(a => a.id === id);
+  document.querySelectorAll('.act-card').forEach(c => c.classList.remove('selected'));
+  document.getElementById('ac'+id).classList.add('selected');
+  const d = document.getElementById('selDetail');
+  d.style.display = 'block';
+  delay = 0;
+  document.getElementById('delaySlider').value = 0;
+  updateSliderGradient(document.getElementById('delaySlider'), 0, 90);
+  renderCPPath();
+  updateDelay(0);
+  d.style.animation = 'none';
+  requestAnimationFrame(()=>{ d.style.animation='fadeUp 0.4s ease both'; });
+}
+
+// ── Render critical path ──
+function renderCPPath(){
+  const container = document.getElementById('cpNodes');
+  const selName = sel.name.split(' ')[0].substring(0,5);
+  container.innerHTML = CP_NODES.map((n,i) => {
+    const isHighlight = n.toLowerCase().includes(sel.name.split(' ')[0].substring(0,4).toLowerCase());
+    const cls = isHighlight ? 'highlight' : sel.critical ? 'critical' : 'normal';
+    const arrow = i < CP_NODES.length-1 ? '<span class="cp-arrow">&#8594;</span>' : '';
+    return `<span class="cp-node ${cls}">${n}</span>${arrow}`;
+  }).join('');
+}
+
+// ── On delay change ──
+function onDelayChange(v){
+  delay = parseInt(v);
+  updateSliderGradient(document.getElementById('delaySlider'), v, 90);
+  updateDelay(v);
+}
+
+function updateSliderGradient(el, v, max){
+  const pct = (v / max * 100).toFixed(1);
+  el.style.setProperty('--pct', pct+'%');
+  // inline background for cross-browser
+  el.style.background = `linear-gradient(90deg, var(--sky) ${pct}%, rgba(11,31,58,0.1) ${pct}%)`;
+}
+
+function updateDelay(v){
+  delay = parseInt(v);
+  const delayBig = document.getElementById('delayBig');
+  delayBig.textContent = delay;
+  delayBig.style.color = delay === 0 ? 'var(--navy)' : delay < 20 ? '#B7770A' : 'var(--red)';
+
+  if(!sel) return;
+
+  const projDelay = Math.round(delay * (sel.ci / 100));
+  const newDur = CPM_DUR + projDelay;
+
+  animVal('mProjDelay', projDelay > 0 ? '+'+projDelay+' gün' : '0 gün');
+  animVal('mNewDur', newDur.toLocaleString('tr-TR'));
+  animVal('mCI', '%'+sel.ci);
+
+  // impact level
+  let level, title, text;
+  if(delay === 0){
+    level = 0;
+    title = 'Gecikme girilmedi';
+    text = `${sel.name} aktivitesi seçildi. Kritiklik İndeksi: %${sel.ci} — ${sel.ci === 100 ? 'bu aktivite tüm simülasyonlarda kritik yolda yer aldı' : sel.ci > 70 ? 'yüksek risk grubunda' : sel.ci > 30 ? 'orta risk grubunda' : 'düşük risk grubunda'}. Gecikme girmek için kaydırıcıyı sürükleyin.`;
+  } else if(projDelay <= 5){
+    level = 1;
+    title = 'Düşük proje etkisi';
+    text = `${delay} günlük gecikme, %${sel.ci} CI nedeniyle projeye yalnızca ${projDelay} gün yansır. Esneklik var.`;
+  } else if(projDelay <= 20){
+    level = 2;
+    title = 'Orta proje etkisi — dikkat!';
+    text = `${delay} günlük gecikme projeyi ${projDelay} gün uzatır. Bu aktivite her 10 simülasyonun ${Math.round(sel.ci/10)}'inde kritik yolda.`;
+  } else {
+    level = 3;
+    title = 'Kritik etki — acil müdahale!';
+    text = `${delay} günlük gecikme projeyi ${projDelay} gün uzatır. %${sel.ci} CI değeriyle bu aktivite projenin ana darboğazlarından biri — sözleşmesel yükümlülükler tehlikede.`;
+  }
+
+  const box = document.getElementById('impactBox');
+  box.className = 'impact-box level-'+level;
+  document.getElementById('impactTitle').textContent = title;
+  document.getElementById('impactText').textContent = text;
+
+  document.getElementById('toS2btn').disabled = (delay === 0);
+}
+
+// ── Screen 2 ──
+function goS2(){
+  fillS2();
+  goScreen('s2');
+  setProgress(2);
+}
+
+function fillS2(){
+  if(!sel) return;
+  const projDelay = Math.round(delay * (sel.ci/100));
+  const total = projDelay * dailyFine;
+  const mc153cost = MC_GAP * dailyFine;
+
+  document.getElementById('ft1').textContent = sel.name;
+  document.getElementById('ft2').textContent = '%'+sel.ci;
+  document.getElementById('ft3').textContent = delay+' gün';
+  document.getElementById('ft4').textContent = projDelay > 0 ? '+'+projDelay+' gün' : '0 gün';
+  document.getElementById('ft5').textContent = fmtTL(dailyFine)+' / gün';
+  document.getElementById('ftTotal').textContent = fmtTL(total);
+
+  updateSliderGradient(document.getElementById('fineSlider'), dailyFine - 100000, 1900000);
+  document.getElementById('fineBig').textContent = fmtNum(dailyFine);
+}
+
+function onFineChange(v){
+  dailyFine = parseInt(v);
+  updateSliderGradient(document.getElementById('fineSlider'), dailyFine - 100000, 1900000);
+  document.getElementById('fineBig').textContent = fmtNum(dailyFine);
+  fillS2();
+}
+
+// ── Screen 3 ──
+function goS3(){
+  buildSensGrid();
+  goScreen('s3');
+  setProgress(3);
+}
+
+function buildSensGrid(){
+  const g = document.getElementById('sensGrid');
+  g.innerHTML = SENS.map((s,i) => {
+    const savingColor = s.ci === 100 ? 'var(--red)' : s.ci > 70 ? 'var(--blue)' : s.ci > 30 ? 'var(--green)' : 'var(--muted)';
+    return `
+    <div class="sens-card" id="sc${s.id}" onclick="selectSens(${s.id})" style="animation:fadeUp 0.4s ${i*0.08}s ease both">
+      <div class="sens-saving" style="color:${savingColor}">${s.saving}</div>
+      <div class="sens-saving-unit">gün tasarruf</div>
+      <div class="sens-name">${s.name}</div>
+      <div class="sens-ci">CI: %${s.ci} &middot; ${s.phase}</div>
+    </div>`;
+  }).join('');
+}
+
+function selectSens(id){
+  sensChoice = SENS.find(s => s.id === id);
+  const maxSaving = Math.max(...SENS.map(s=>s.saving));
+  const isOptimal = sensChoice.saving === maxSaving;
+
+  document.querySelectorAll('.sens-card').forEach(c => {
+    c.classList.remove('selected','optimal-choice','suboptimal');
+  });
+  document.getElementById('sc'+id).classList.add('selected');
+
+  const moneySaved = sensChoice.saving * dailyFine;
+
+  const box = document.getElementById('sensBox');
+  box.className = 'impact-box ' + (isOptimal ? 'level-1' : 'level-2');
+  document.getElementById('sensTitle').textContent = isOptimal ? 'Doğru seçim!' : 'İyi deneme — daha verimli bir seçim mevcut';
+  document.getElementById('sensText').textContent = isOptimal
+    ? `${sensChoice.name} en yüksek CI değerine sahip (%${sensChoice.ci}). 30 günlük hızlandırma projeyi ${sensChoice.saving} gün kısaltır. Kaynağı doğru aktiviteye yönlendirdiniz.`
+    : `${sensChoice.name} seçildi (CI: %${sensChoice.ci}). Bu aktiviteyi hızlandırmak projeyi ${sensChoice.saving} gün kısaltır. Ancak daha yüksek CI'lı bir aktivite daha fazla tasarruf sağlardı.`;
+
+  document.getElementById('sr1').textContent = sensChoice.name;
+  document.getElementById('sr2').textContent = sensChoice.saving+' gün';
+  document.getElementById('sr3').textContent = fmtTL(moneySaved)+' tasarruf';
+
+  document.getElementById('sensResult').style.display = 'block';
+  document.getElementById('toFinalBtn').disabled = false;
+}
+
+// ── Final ──
+function goFinal(){
+  const projDelay = Math.round(delay * (sel.ci/100));
+  const totalFine = projDelay * dailyFine;
+
+  const insights = [
+    {
+      icon: '📍', bg: '#EBF0F8',
+      label: 'Seçilen aktivite',
+      text: `${sel.name} · CI %${sel.ci} · ${delay} gün gecikme`
+    },
+    {
+      icon: '📅', bg: '#FDECEA',
+      label: 'Proje etkisi',
+      text: `+${projDelay} gün uzama → CPM: ${(CPM_DUR+projDelay).toLocaleString('tr-TR')} gün`
+    },
+    {
+      icon: '💸', bg: '#FDF6E3',
+      label: 'Mali zarar',
+      text: fmtTL(totalFine) + ' (' + delay + 'gün × %'+sel.ci+' × '+fmtTL(dailyFine)+')'
+    },
+    {
+      icon: '🎯', bg: '#EDF5F0',
+      label: 'Sensitivity — en iyi seçim',
+      text: `System Req. Review (CI %100) → ${SENS[0].saving} gün tasarruf → ${fmtTL(SENS[0].saving * dailyFine)}`
+    },
+  ];
+
+  document.getElementById('insightList').innerHTML = insights.map((ins, i) => `
+    <div class="insight-item" style="animation-delay:${i*0.1}s">
+      <div class="insight-icon" style="background:${ins.bg}">${ins.icon}</div>
+      <div class="insight-content">
+        <div class="insight-label">${ins.label}</div>
+        <div class="insight-text">${ins.text}</div>
+      </div>
+    </div>
+  `).join('');
+
+  goScreen('sfinal');
+  setProgress(4);
+}
+
+// ── Helpers ──
+function goScreen(id){
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+  window.scrollTo({top:0, behavior:'smooth'});
+}
+
+function setProgress(step){
+  [1,2,3].forEach(i => {
+    const pi = document.getElementById('pi'+i);
+    const pl = document.getElementById('pl'+i);
+    pi.className = 'prog-item' + (i === step ? ' active' : i < step ? ' done' : '');
+    if(pl) pl.className = 'prog-line' + (i < step ? ' done' : '');
+    const circle = pi.querySelector('.prog-circle');
+    if(i < step) circle.textContent = '✓';
+    else circle.textContent = i;
+  });
+}
+
+function animVal(id, val){
+  const el = document.getElementById(id);
+  el.textContent = val;
+  el.classList.remove('counting');
+  requestAnimationFrame(()=>{ el.classList.add('counting'); });
+}
+
+function fmtTL(n){
+  return n.toLocaleString('tr-TR') + ' ₺';
+}
+
+function fmtNum(n){
+  return n.toLocaleString('tr-TR');
+}
+
+function restartApp(){
+  sel = null; delay = 0; dailyFine = 300000; sensChoice = null;
+  document.getElementById('selDetail').style.display = 'none';
+  document.querySelectorAll('.act-card').forEach(c => c.classList.remove('selected'));
+  document.getElementById('delaySlider').value = 0;
+  document.getElementById('fineSlider').value = 300000;
+  document.getElementById('sensResult').style.display = 'none';
+  document.getElementById('toFinalBtn').disabled = true;
+  document.getElementById('toS2btn').disabled = true;
+  buildGrid();
+  buildSensGrid();
+  goScreen('s1');
+  setProgress(1);
+}
+
+// ── Init ──
+buildGrid();
+</script>
+</body>
+</html>
